@@ -6,7 +6,10 @@ const STORAGE_KEY = 'pokedex-favorites'
 function getInitialFavorites(): number[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) return parsed
+    }
   } catch {
     // localStorage unavailable
   }
@@ -28,7 +31,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
   }
 
   function getFavorites(): number[] {
-    return favorites.value
+    return [...favorites.value]
   }
 
   function persist() {
@@ -39,5 +42,5 @@ export const useFavoriteStore = defineStore('favorite', () => {
     }
   }
 
-  return { favorites, isFavorite, toggleFavorite, getFavorites }
+  return { isFavorite, toggleFavorite, getFavorites }
 })

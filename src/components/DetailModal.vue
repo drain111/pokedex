@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface Props {
   pokemon: {
     id: number
@@ -13,11 +15,11 @@ interface Props {
   genus: string
   flavorText: string
   evolutionStages: { name: string; url: string }[]
-  evolutions: { name: string; url: string }[][]
+  evolutions: ({ name: string; url: string } | undefined)[][]
   isLoading: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
 
 defineEmits<{
   close: []
@@ -132,17 +134,19 @@ function getStatColor(statName: string) {
       <div class="modal-evolution" v-if="evolutions.length > 0">
         <h3 class="modal-subtitle">Evolutions</h3>
         <div class="evolution-chain">
-          <div v-for="evo in evolutions" :key="evo[1].name" class="evolution-connector">
-            <div class="evolution-stage">
-              <img
-                :src="getEvoSprite(evo[1].name)"
-                :alt="getEvoName(evo[1].name)"
-                class="evo-sprite"
-              />
-              <span class="evo-name">{{ getEvoName(evo[1].name) }}</span>
+          <template v-for="(evo, i) in evolutions" :key="i">
+            <div v-if="evo[1]" class="evolution-connector">
+              <div class="evolution-stage">
+                <img
+                  :src="getEvoSprite(evo[1].name)"
+                  :alt="getEvoName(evo[1].name)"
+                  class="evo-sprite"
+                />
+                <span class="evo-name">{{ getEvoName(evo[1].name) }}</span>
+              </div>
+              <div class="evo-arrow">→</div>
             </div>
-            <div class="evo-arrow">→</div>
-          </div>
+          </template>
         </div>
       </div>
     </div>

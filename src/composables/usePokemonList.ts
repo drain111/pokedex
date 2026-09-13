@@ -1,10 +1,12 @@
 // Import Vue composition APIs: ref for reactive state, computed for derived state
-import { ref, computed } from 'vue'
+import { ref, computed, inject  } from 'vue'
 // Reusable search logic extracted into its own composable
 import { useSearch } from './useSearch'
 // Pinia store for managing favorite Pokemon IDs across the app
-import { useFavoriteStore } from '../stores/favorite'
+import type { FavoritesRepository } from '../ports/favoritesRepository.ts'
 
+
+  
 // Base URL for the PokeAPI (a free REST API containing all Pokemon data)
 const API_BASE = 'https://pokeapi.co/api/v2'
 export interface PokemonSpecies {
@@ -16,7 +18,6 @@ export interface PokemonEntry {
   pokemon_species: PokemonSpecies
   id: number
   entry_number: number          // e.g. 25 (extracted from the URL below)
-  spriteUrl: string   // e.g. "https:// pokeapi.co/media/sprites/pokemon/25.png"
 }
 
 // Interface matching the PokeAPI pagination response shape
@@ -35,29 +36,24 @@ export interface PokemonListResult {
 function extractIdFromUrl(url: string): number {
   const filter = url.split('/').filter(Boolean)
   const id = filter[filter.length - 1]
-  if(!id) return 0
+  if(!id) return 1
   return parseInt(id, 10)
 }
 
 // Fetches ALL pokemon from PokeAPI using pagination.
-// PokeAPI only returns 20 items per page by default, but we request 1026 at once
-// and use the `next` cursor to keep fetching until there are no more pages.
+// PokeAPI pokedex returns every pokemon with the pokedex index
 export async function fetchPokemonList(): Promise<PokemonEntry[]> {
   let allPokemon: PokemonEntry[] = []
   let url = `${API_BASE}/pokedex/1/`
 
   // Keep fetching while there's a next page URL
-  while (url != "") {
-    const res = await fetch(url)                      // Send HTTP GET request
-    if (!res.ok) throw new Error(`Failed to fetch pokemon list: ${res.status}`)
-    const data: PokemonListResult = await res.json()  // Parse the JSON response
-    
-    // For each pokemon in this page, spread its name/url and add the extracted id
-    allPokemon = [...allPokemon, ...data.pokemon_entries.map((p) => ({ ...p, id: extractIdFromUrl(p.pokemon_species.url)}))]
-    
-    url = data.next ?? ""  // Move to the next page, or empty string if done
-  }
-  console.log(allPokemon)
+  const res = await fetch(url)                      // Send HTTP GET request
+  if (!res.ok) throw new Error(`Failed to fetch pokemon list: ${res.status}`)
+  const data: PokemonListResult = await res.json()  // Parse the JSON response
+  
+  // For each pokemon in this page, spread its name/url and add the extracted id
+  allPokemon = [...allPokemon, ...data.pokemon_entries.map((p) => ({ ...p, id: extractIdFromUrl(p.pokemon_species.url)}))]
+  
   return allPokemon
 }
 
@@ -77,8 +73,9 @@ export function usePokemonList() {
   // useSearch is a composable that provides search term state and filtering logic.
   // It's reused here without duplicating the search code.
   const searchFilter = useSearch()
+  const favoriteStore = inject<FavoritesRepository>('favoritesRepository')
+  if (!favoriteStore) throw new Error('favoritesRepository was not provided')
   // useFavoriteStore is a Pinia store instance for cross-component favorite management
-  const favoriteStore = useFavoriteStore()
 
   // --- Computed properties ---
   // `computed` creates a derived reactive value that auto-recalculates when its

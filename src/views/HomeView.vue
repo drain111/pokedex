@@ -1,27 +1,22 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue'
 import SearchBar from '../components/SearchBar.vue'
 import FavoriteFilter from '../components/FavoriteFilter.vue'
 import PokemonRow from '../components/PokemonRow.vue'
 import DetailModal from '../components/DetailModal.vue'
 import { usePokemonList } from '../composables/usePokemonList'
-import { useFavoriteStore } from '../stores/favorite'
+import type { FavoritesRepository } from '../ports/favoritesRepository.ts'
 import { fetchPokemonDetail } from '../composables/usePokemonDetail'
 
-const favoriteStore = useFavoriteStore()
+const favoriteStore = inject<FavoritesRepository>('favoritesRepository')
+if (!favoriteStore) throw new Error('favoritesRepository was not provided')
 const pokemonStore = usePokemonList()
 
 const { pokemons, loading, error, filterMode, displayedPokemons, loadPokemon, searchFilter } = pokemonStore
 const searchTerm = ref('')
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-watch(searchTerm, (newVal) => {
-  if (searchTimer) clearTimeout(searchTimer)
-  searchTimer = setTimeout(() => {
-    searchFilter.searchTerm.value = newVal
-    searchFilter.search(pokemons.value, newVal)
-  }, 200)
-})
+
 
 const selectedPokemonUrl = ref<string | null>(null)
 const detailData = ref<{
@@ -40,14 +35,15 @@ const detailData = ref<{
 } | null>(null)
 const isDetailLoading = ref(false)
 
-async function openDetail(url: string, name: string, dexNumber: number) {
+async function openDetail(url: string, name: string) {
   selectedPokemonUrl.value = url
   isDetailLoading.value = true
   detailData.value = null
   try {
     detailData.value = await fetchPokemonDetail(url, name)
   } catch (e) {
-    // leave empty
+    isDetailLoading.value = false
+    alert("Error cargando el pokemon")
   } finally {
     isDetailLoading.value = false
   }
@@ -138,16 +134,15 @@ onUnmounted(() => {
       <ul v-else class="pokemon-list">
         <li
           v-for="item in displayedPokemons"
-          :key="item.url"
+          :key="item.pokemon_species.url"
           class="pokemon-item"
         >
           <PokemonRow
             :name="item.pokemon_species.name"
             :dex-number="item.id"
-            :sprite-url="getSpriteUrl(item.id)"
-            :types="[]"
-            :is-favorite="favoriteStore.isFavorite(parseInt(item.pokemon_species.url.split('/').filter(Boolean).pop() ?? '0', 10))"
-            @click="openDetail(item.pokemon_species.url, item.pokemon_species.name, parseInt(item.pokemon_species.url.split('/').filter(Boolean).pop() ?? '0', 10))"
+            :sprite-url="getSpriteUrl(item.id.toString())"
+            :is-favorite="favoriteStore.isFavorite(parseInt(item.id.toString()))"
+            @click="openDetail(item.pokemon_species.url, item.pokemon_species.name)"
           />
         </li>
       </ul>
@@ -171,7 +166,8 @@ onUnmounted(() => {
 .pokedex-app {
   max-width: 800px;
   margin: 0 auto;
-  padding: 0 16px 64px;
+  padding: 0 16px 32px;
+
 }
 
 .app-header {
@@ -248,7 +244,5 @@ onUnmounted(() => {
 
 
 
-.pokedex-app {
-  padding-bottom: 32px;
-}
+
 </style>

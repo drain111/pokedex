@@ -29,7 +29,16 @@ jobs:
 
       - run: pnpm test:unit -- --run
 
+      - run: npx playwright install --with-deps chromium
+
       - run: pnpm build-only
+
+      - run: npx playwright test   
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
 
   deploy:
     needs: check
@@ -43,20 +52,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: pnpm/action-setup@v4
+      - uses: actions/download-artifact@v4
         with:
-          version: 9
-
-      - uses: actions/setup-node@v4
+          name: dist
+          path: dist
+      - uses: actions/upload-pages-artifact@v3
         with:
-          node-version: '22'
-          cache: 'pnpm'
-
-      - run: pnpm install --frozen-lockfile
-
-      - run: pnpm build-only
+          path: dist
 
       - uses: actions/upload-pages-artifact@v3
         with:
