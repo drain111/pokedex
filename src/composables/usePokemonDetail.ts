@@ -1,4 +1,3 @@
-import { ref } from 'vue'
 
 const API_BASE = 'https://pokeapi.co/api/v2'
 
@@ -48,8 +47,8 @@ export interface EvolutionChainApiResponse {
   chain: ChainLink
 }
 
-// eslint-disable-next-line camelcase
-function extractFlavorText(entries: { flavor_text: string; version_group: { name: string } }[], lang = 'en'): string {
+ 
+function extractFlavorText(entries: { flavor_text: string; version_group: { name: string } }[], _lang = 'en'): string {
   const texts: string[] = []
   for (const entry of entries) {
     const clean = entry.flavor_text
@@ -124,7 +123,6 @@ export async function fetchPokemonDetail(pokemonUrl: string, name:string): Promi
 
       let parentId: EvolutionEntry | null = null
       if (speciesJson.id) {
-        const urlParts = chainUrl.split('/')
         const baseUrl = chainUrl.substring(0, chainUrl.lastIndexOf('/'))
         parentId = { name: 'unknown', url: baseUrl }
       }

@@ -27,7 +27,9 @@ export interface PokemonListResult {
   previous: string | null        // URL to fetch the previous page (null on first page)
   pokemon_entries: PokemonEntry[]        // Array of pokemon name + url for this page
 }
-
+interface FilterFn {
+  (items: unknown[], term: string): unknown[]
+}
 // Utility function that parses the numeric ID from a PokeAPI URL.
 // Example input: "https://pokeapi.co/api/v2/pokemon/25/"
 //   -> splits by "/" -> ["https:", "", "pokeapi.co", "api", "v2", "pokemon", "25", ""]
@@ -44,7 +46,7 @@ function extractIdFromUrl(url: string): number {
 // PokeAPI pokedex returns every pokemon with the pokedex index
 export async function fetchPokemonList(): Promise<PokemonEntry[]> {
   let allPokemon: PokemonEntry[] = []
-  let url = `${API_BASE}/pokedex/1/`
+  const url = `${API_BASE}/pokedex/1/`
 
   // Keep fetching while there's a next page URL
   const res = await fetch(url)                      // Send HTTP GET request
@@ -87,7 +89,7 @@ export function usePokemonList() {
 
     // If user typed something in the search box, filter the list using useSearch's logic
     if (searchFilter.searchTerm.value) {
-      items = (searchFilter.search as Function)(items, searchFilter.searchTerm.value) as PokemonEntry[]
+      items = (searchFilter.search as FilterFn)(items, searchFilter.searchTerm.value) as PokemonEntry[]
     }
 
     // If the "favorites" tab is active, only keep pokemon whose IDs are in the favorite store
@@ -127,19 +129,14 @@ export function usePokemonList() {
   function onFilterChange(mode: 'all' | 'favorites') {
     filterMode.value = mode
   }
-
-  // --- Return reactive state, computed values, and actions ---
-  // Components use these via `setup` or `<script setup>` to access pokemon data,
-  // trigger loading, filter display, etc. The key is that all returned `ref` and
-  // `computed` values stay reactive when used inside a component.
   return {
-    pokemons,            // raw list of pokemon (ref)
-    loading,             // fetch status (ref)
-    error,               // error message if any (ref)
-    filterMode,          // active filter tab (ref)
-    displayedPokemons,   // filtered/searched computed list (computed)
-    loadPokemon,         // action to fetch all pokemon
-    onFilterChange,      // action to switch between all/favorites
-    searchFilter,        // exposed search state and filtering function
+    pokemons,
+    loading,
+    error,
+    filterMode,
+    displayedPokemons,
+    loadPokemon,
+    onFilterChange,
+    searchFilter,
   }
 }

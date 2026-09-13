@@ -5,12 +5,16 @@ import { createFakeFavoritesRepository } from '../adapters/FakeFavoritesReposito
 import HomeView from '../views/HomeView.vue'
 
 const mockResponse = {
-  count: 1, next: null, previous: null,
-  pokemon_entries: [{ pokemon_species: { name: 'bulbasaur', url: 'https://pokeapi.co/api/v2/pokemon-species/1/' } }],
+  count: 4, next: null, previous: null,
+  pokemon_entries: [{ pokemon_species: { name: 'bulbasaur', url: 'https://pokeapi.co/api/v2/pokemon-species/1/' } },
+    { pokemon_species: { name: 'ivysaur', url: 'https://pokeapi.co/api/v2/pokemon-species/2/' }},
+    { pokemon_species: { name: 'venusaur', url: 'https://pokeapi.co/api/v2/pokemon-species/3/' }},
+    { pokemon_species: { name: 'charmander', url: 'https://pokeapi.co/api/v2/pokemon-species/4/' }}
+  ],
 }
 
 beforeEach(() => {
-  global.fetch = vi.fn().mockResolvedValue({ ok: true, json: async () => mockResponse }) as unknown as typeof fetch
+  global.fetch = vi.fn<typeof fetch>().mockResolvedValue({ ok: true, json: async () => mockResponse }  as Response) 
 })
 
 describe('HomeView', () => {
@@ -26,30 +30,28 @@ describe('HomeView', () => {
     await vi.waitUntil(() => wrapper.text().includes('bulbasaur'))
     expect(wrapper.text()).toContain('bulbasaur')
   })
-  const mockEntries = Array.from({ length: 5 }, (_, i) => ({
-    pokemon_species: {
-      name: `pokemon-${i + 1}`,
-      url: `https://pokeapi.co/api/v2/pokemon-species/${i + 1}/`,
-    },
-  }))
-
-  beforeEach(() => {
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ count: 5, next: null, previous: null, pokemon_entries: mockEntries }),
-    }) as unknown as typeof fetch
-  })
+  
 
   it('renders one row per pokemon returned', async () => {
-    const wrapper = mount(HomeView, { global: { plugins: [createTestingPinia({ createSpy: vi.fn })] } })
-    await vi.waitUntil(() => wrapper.findAll('.pokemon-item').length === mockEntries.length)
-    expect(wrapper.findAll('.pokemon-item').length).toBe(mockEntries.length)
+    const wrapper = mount(HomeView, {
+      global: { provide: {
+      favoritesRepository: createFakeFavoritesRepository([1, 4]), // bulbasaur & charmander pre-favorited
+      }, 
+    },
+    })
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-item').length === mockResponse.count)
+    expect(wrapper.findAll('.pokemon-item').length).toBe(mockResponse.count)
   })
   it('shows the name and dex number for each pokemon', async () => {
-    const wrapper = mount(HomeView, { global: { plugins: [createTestingPinia({ createSpy: vi.fn })] } })
-    await vi.waitUntil(() => wrapper.findAll('.pokemon-item').length === mockEntries.length)
+    const wrapper = mount(HomeView, {
+      global: { provide: {
+      favoritesRepository: createFakeFavoritesRepository([1, 4]), // bulbasaur & charmander pre-favorited
+      }, 
+    },
+    })
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-item').length === mockResponse.count)
 
-    mockEntries.forEach((entry, i) => {
+    mockResponse.pokemon_entries.forEach((entry, i) => {
       expect(wrapper.text()).toContain(entry.pokemon_species.name)
       expect(wrapper.text()).toContain(String(i + 1))
     })

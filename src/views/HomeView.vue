@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onUnmounted, inject } from 'vue'
+import { ref, onMounted, onUnmounted, inject } from 'vue'
 import SearchBar from '../components/SearchBar.vue'
 import FavoriteFilter from '../components/FavoriteFilter.vue'
 import PokemonRow from '../components/PokemonRow.vue'
@@ -12,9 +12,9 @@ const favoriteStore = inject<FavoritesRepository>('favoritesRepository')
 if (!favoriteStore) throw new Error('favoritesRepository was not provided')
 const pokemonStore = usePokemonList()
 
-const { pokemons, loading, error, filterMode, displayedPokemons, loadPokemon, searchFilter } = pokemonStore
+const { loading, error, filterMode, displayedPokemons, loadPokemon } = pokemonStore
 const searchTerm = ref('')
-let searchTimer: ReturnType<typeof setTimeout> | null = null
+//let searchTimer: ReturnType<typeof setTimeout> | null = null
 
 
 
@@ -43,7 +43,7 @@ async function openDetail(url: string, name: string) {
     detailData.value = await fetchPokemonDetail(url, name)
   } catch (e) {
     isDetailLoading.value = false
-    alert("Error cargando el pokemon")
+    alert(e)
   } finally {
     isDetailLoading.value = false
   }
@@ -62,15 +62,15 @@ function getSpriteUrl(name: string) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${name}.png`
 }
 
-function getEvolutionUrl(name: string) {
+/*function getEvolutionUrl(name: string) {
   return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${name}.png`
-}
+}*/
 
-function normalizeName(name: string) {
+/*function normalizeName(name: string) {
   return name.charAt(0).toUpperCase() + name.slice(1)
-}
+}*/
 
-function getStatColor(statName: string) {
+/*function getStatColor(statName: string) {
   const colors: Record<string, string> = {
     hp: '#ff5555',
     attack: '#f08030',
@@ -80,9 +80,9 @@ function getStatColor(statName: string) {
     speed: '#f85888',
   }
   return colors[statName] || '#888'
-}
+}*/
 
-function getStatName(statKey: string) {
+/*function getStatName(statKey: string) {
   const names: Record<string, string> = {
     hp: 'HP',
     attack: 'ATK',
@@ -92,9 +92,9 @@ function getStatName(statKey: string) {
     speed: 'SPE',
   }
   return names[statKey] || statKey
-}
+}*/
 
-const statOrder = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']
+//const statOrder = ['hp', 'attack', 'defense', 'special-attack', 'special-defense', 'speed']
 
 onMounted(() => {
   loadPokemon()

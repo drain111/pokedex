@@ -1,5 +1,4 @@
 import type { FavoritesRepository } from '../ports/favoritesRepository'
-import { watch } from 'vue'
 
 export function createFakeFavoritesRepository(initial: number[] = []): FavoritesRepository {
   let favs = [...initial]

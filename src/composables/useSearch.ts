@@ -1,5 +1,4 @@
-import { useId, ref, watch } from 'vue'
-import { debounce } from './utils'
+import {  ref, watch } from 'vue'
 
 export function useSearch(initialTerm = '') {
   const searchTerm = ref(initialTerm)
@@ -18,7 +17,7 @@ export function useSearch(initialTerm = '') {
     })
   }
 
-  watch(searchTerm, (newTerm, oldTerm) => {
+  watch(searchTerm, (_newTerm, _oldTerm) => {
     // Result will be set by the parent composable that has the data source
     result.value = []
   })

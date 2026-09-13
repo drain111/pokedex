@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const props = defineProps({
+defineProps({
   filterMode: { type: String, default: 'all' },
   favCount: { type: Number, default: 0 },
 })
