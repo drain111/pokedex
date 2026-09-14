@@ -30,4 +30,45 @@ test('every row has a name, dex number, and a loaded sprite', async ({ page }) =
     const naturalWidth = await img.evaluate((el: HTMLImageElement) => el.naturalWidth)
     expect(naturalWidth).toBeGreaterThan(0)
   }
+
+
+  
 })
+
+test('testing the search terms, bulbasaur should make bulbasaur appear only, same as ivysaur, and none for wetrgdffdswe', async ({page}) => {
+    await page.goto('/')
+    await expect(page.locator('.pokemon-item').first()).toBeVisible({ timeout: 1200000 })
+
+    await page.locator('.search-input').fill('bulbasaur')
+    // debounce is 200ms, give it a little more room for a real browser
+    await page.waitForFunction(
+      () => document.querySelectorAll('.pokemon-item').length === 1,
+      { timeout: 5000 },
+    )
+
+    const rows = page.locator('.pokemon-item')
+    await expect(rows).toHaveCount(1)
+    await expect(page.locator('.pokemon-item')).toContainText('bulbasaur')
+
+    await page.locator('.search-input').fill('ivysaur')
+    // debounce is 200ms, give it a little more room for a real browser
+    await page.waitForFunction(
+      () => document.querySelectorAll('.pokemon-item').length === 1,
+      { timeout: 5000 },
+    )
+
+    const rows2 = page.locator('.pokemon-item')
+    await expect(rows2).toHaveCount(1)
+    await expect(page.locator('.pokemon-item')).toContainText('ivysaur')
+
+    await page.locator('.search-input').fill('wetrgdffdswe')
+    // debounce is 200ms, give it a little more room for a real browser
+    await page.waitForFunction(
+      () => document.querySelectorAll('.pokemon-item').length === 0,
+      { timeout: 5000 },
+    )
+
+    const rows3 = page.locator('.pokemon-item')
+    await expect(rows3).toHaveCount(0)
+    
+  })

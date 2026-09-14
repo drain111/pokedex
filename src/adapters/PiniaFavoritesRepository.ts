@@ -1,5 +1,5 @@
 import { useFavoriteStore } from '../stores/favorite'
-import type { FavoritesRepository } from '../ports/favoritesRepository'
+import type { FavoritesRepository } from '../ports/FavoritesRepository'
 import { watch } from 'vue'
 
 export function createPiniaFavoritesRepository(): FavoritesRepository {

@@ -1,4 +1,4 @@
-import type { FavoritesRepository } from '../ports/favoritesRepository'
+import type { FavoritesRepository } from '../ports/FavoritesRepository'
 
 export function createFakeFavoritesRepository(initial: number[] = []): FavoritesRepository {
   let favs = [...initial]

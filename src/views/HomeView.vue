@@ -1,20 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, inject } from 'vue'
+import { ref, onMounted } from 'vue'
 import SearchBar from '../components/SearchBar.vue'
 import FavoriteFilter from '../components/FavoriteFilter.vue'
 import PokemonRow from '../components/PokemonRow.vue'
 import DetailModal from '../components/DetailModal.vue'
 import { usePokemonList } from '../composables/usePokemonList'
-import type { FavoritesRepository } from '../ports/favoritesRepository.ts'
 import { fetchPokemonDetail } from '../composables/usePokemonDetail'
 
-const favoriteStore = inject<FavoritesRepository>('favoritesRepository')
-if (!favoriteStore) throw new Error('favoritesRepository was not provided')
 const pokemonStore = usePokemonList()
 
-const { loading, error, filterMode, displayedPokemons, loadPokemon } = pokemonStore
-const searchTerm = ref('')
-//let searchTimer: ReturnType<typeof setTimeout> | null = null
+const { loading, error, filterMode, displayedPokemons, loadPokemon, favoriteStore } = pokemonStore
 
 
 
@@ -100,16 +95,14 @@ onMounted(() => {
   loadPokemon()
 })
 
-onUnmounted(() => {
-  if (searchTimer) clearTimeout(searchTimer)
-})
+
 </script>
 
 <template>
   <div class="pokedex-app">
     <header class="app-header">
       <h1 class="app-title">Pokédex</h1>
-      <SearchBar v-model="searchTerm" />
+      <SearchBar v-model="pokemonStore.searchFilter.searchTerm.value" />
       <FavoriteFilter
         v-model:filter-mode="filterMode"
         :fav-count="favoriteStore.getFavorites().length"

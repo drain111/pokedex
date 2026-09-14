@@ -1,26 +1,17 @@
-import {  ref, watch } from 'vue'
+import {  ref } from 'vue'
+import type { PokemonEntry } from './usePokemonList'
 
 export function useSearch(initialTerm = '') {
   const searchTerm = ref(initialTerm)
-  const result = ref<unknown[]>([])
+  const result = ref<PokemonEntry[]>([])
 
-  function search(items: unknown[], term: string): unknown[] {
-    if (!term.trim()) return items
+  function search(items: PokemonEntry[], term: string): PokemonEntry[] {
+  if (!term.trim()) return items
 
-    const normalized = term.trim().toLowerCase()
-    return items.filter((item) => {
-      if (typeof item === 'string') return item.toLowerCase().includes(normalized)
-      if (item && typeof item === 'object' && 'name' in item) {
-        return (item.name as string).toLowerCase().includes(normalized)
-      }
-      return false
-    })
-  }
+  const normalized = term.trim().toLowerCase()
+  return items.filter((item) => item.pokemon_species.name.toLowerCase().includes(normalized))
+}
 
-  watch(searchTerm, (_newTerm, _oldTerm) => {
-    // Result will be set by the parent composable that has the data source
-    result.value = []
-  })
-
+  
   return { searchTerm, result, search }
 }

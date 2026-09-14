@@ -56,4 +56,28 @@ describe('HomeView', () => {
       expect(wrapper.text()).toContain(String(i + 1))
     })
   })
+  it('testing the search terms, bulbasaur should make bulbasaur appear only, same as ivysaur, and none for wetrgdffdswe', async () => {
+    const wrapper = mount(HomeView, {
+      global: { provide: {
+      favoritesRepository: createFakeFavoritesRepository([1, 4]), // bulbasaur & charmander pre-favorited
+      }, 
+    },
+    })
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-item').length === mockResponse.count)
+    wrapper.find('.search-input').setValue('bulbasaur')
+    // search has a 200ms debounce, so wait for it
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-item').length === 1, { timeout: 1000 })
+
+    expect(wrapper.findAll('.pokemon-item').length).toBe(1)
+    wrapper.find('.search-input').setValue('ivysaur')
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-item').length === 1, { timeout: 1000 })
+
+    expect(wrapper.findAll('.pokemon-item').length).toBe(1)
+
+    wrapper.find('.search-input').setValue('wetrgdffdswe')
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-item').length === 0, { timeout: 1000 })
+
+    expect(wrapper.findAll('.pokemon-item').length).toBe(0)
+    
+  })
 })

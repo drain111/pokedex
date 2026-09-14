@@ -3,7 +3,7 @@ import { ref, computed, inject  } from 'vue'
 // Reusable search logic extracted into its own composable
 import { useSearch } from './useSearch'
 // Pinia store for managing favorite Pokemon IDs across the app
-import type { FavoritesRepository } from '../ports/favoritesRepository.ts'
+import type { FavoritesRepository } from '../ports/FavoritesRepository.ts'
 
 
   
@@ -27,9 +27,7 @@ export interface PokemonListResult {
   previous: string | null        // URL to fetch the previous page (null on first page)
   pokemon_entries: PokemonEntry[]        // Array of pokemon name + url for this page
 }
-interface FilterFn {
-  (items: unknown[], term: string): unknown[]
-}
+
 // Utility function that parses the numeric ID from a PokeAPI URL.
 // Example input: "https://pokeapi.co/api/v2/pokemon/25/"
 //   -> splits by "/" -> ["https:", "", "pokeapi.co", "api", "v2", "pokemon", "25", ""]
@@ -89,7 +87,7 @@ export function usePokemonList() {
 
     // If user typed something in the search box, filter the list using useSearch's logic
     if (searchFilter.searchTerm.value) {
-      items = (searchFilter.search as FilterFn)(items, searchFilter.searchTerm.value) as PokemonEntry[]
+      items = (searchFilter.search)(items, searchFilter.searchTerm.value)
     }
 
     // If the "favorites" tab is active, only keep pokemon whose IDs are in the favorite store
@@ -138,5 +136,6 @@ export function usePokemonList() {
     loadPokemon,
     onFilterChange,
     searchFilter,
+    favoriteStore
   }
 }

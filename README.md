@@ -6,6 +6,6 @@ Right now it only displays a list of pokemons,
 
 # TODO
 
-- [ ] Search
+- [x] Search
 - [ ] Favourites
 - [ ] Clicking a Pokemon to see it
