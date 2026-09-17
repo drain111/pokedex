@@ -6,7 +6,7 @@ import PokemonRow from '../components/PokemonRow.vue'
 import DetailModal from '../components/DetailModal.vue'
 import { usePokemonList } from '../composables/usePokemonList'
 import { fetchPokemonDetail } from '../composables/usePokemonDetail'
-
+import type {ChainLink} from '../composables/usePokemonDetail'
 const pokemonStore = usePokemonList()
 
 const { loading, error, filterMode, displayedPokemons, loadPokemon, favoriteStore } = pokemonStore
@@ -26,7 +26,7 @@ const detailData = ref<{
     stats: { stat: { name: string }; base_stat: number }[]
   }
   species: { genus: string; flavorText: string; id: number }
-  evolutionChain: { stages: { name: string; url: string }[]; evolutions: { name: string; url: string }[][] }
+  evolutionChain: ChainLink
 } | null>(null)
 const isDetailLoading = ref(false)
 
@@ -146,8 +146,7 @@ onMounted(() => {
       :pokemon="detailData.detail"
       :genus="detailData.species.genus"
       :flavor-text="detailData.species.flavorText"
-      :evolution-stages="detailData.evolutionChain.stages"
-      :evolutions="detailData.evolutionChain.evolutions"
+      :evolutions="detailData.evolutionChain"
       :is-loading="isDetailLoading"
       @close="closeModal"
       @favorite-toggle="toggleFavorite(detailData.detail.id)"

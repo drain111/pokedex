@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import EvolutionNode from "./EvolutionNode.vue"
+import type {ChainLink} from '../composables/usePokemonDetail'
 
 interface Props {
   pokemon: {
@@ -14,8 +16,7 @@ interface Props {
   }
   genus: string
   flavorText: string
-  evolutionStages: { name: string; url: string }[]
-  evolutions: ({ name: string; url: string } | undefined)[][]
+  evolutions: ChainLink
   isLoading: boolean
 }
 
@@ -60,15 +61,6 @@ function getStatMap(detail: Props['pokemon']) {
   return map
 }
 
-function getEvoSprite(name: string) {
-  const idMatch = name.match(/(?:\/pokemon\/|species\/)([0-9]+)$/)
-  if (idMatch) return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${idMatch[1]}.png`
-  return ''
-}
-
-function getEvoName(name: string) {
-  return name.charAt(0).toUpperCase() + name.slice(1)
-}
 
 function getStatColor(statName: string) {
   return statColors[statName] || '#888'
@@ -86,7 +78,7 @@ function getStatColor(statName: string) {
       <div class="modal-header">
         <h2 class="modal-title">
           <span class="modal-number">#{{ pokemon.id.toString().padStart(3, '0') }}</span>
-          <span class="modal-name">{{ genus }}</span>
+          <span class="modal-name">{{ pokemon.name }}</span>
         </h2>
         <button class="close-btn" @click="$emit('close')">×</button>
       </div>
@@ -131,22 +123,10 @@ function getStatColor(statName: string) {
         <p class="modal-flavor-text">{{ flavorText }}</p>
       </div>
 
-      <div class="modal-evolution" v-if="evolutions.length > 0">
+      <div class="modal-evolution" v-if="evolutions.evolves_to.length > 0">
         <h3 class="modal-subtitle">Evolutions</h3>
         <div class="evolution-chain">
-          <template v-for="(evo, i) in evolutions" :key="i">
-            <div v-if="evo[1]" class="evolution-connector">
-              <div class="evolution-stage">
-                <img
-                  :src="getEvoSprite(evo[1].name)"
-                  :alt="getEvoName(evo[1].name)"
-                  class="evo-sprite"
-                />
-                <span class="evo-name">{{ getEvoName(evo[1].name) }}</span>
-              </div>
-              <div class="evo-arrow">→</div>
-            </div>
-          </template>
+          <EvolutionNode :node="evolutions" />
         </div>
       </div>
     </div>
