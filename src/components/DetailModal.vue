@@ -18,10 +18,12 @@ interface Props {
   flavorText: string
   evolutions: ChainLink
   isLoading: boolean
+  isFavorite?: boolean
 }
 
-const props = defineProps<Props>()
-
+const props = withDefaults(defineProps<Props>(), {
+  isFavorite:false
+})
 defineEmits<{
   close: []
   favoriteToggle: [id: number]
@@ -80,6 +82,7 @@ function getStatColor(statName: string) {
           <span class="modal-number">#{{ pokemon.id.toString().padStart(3, '0') }}</span>
           <span class="modal-name">{{ pokemon.name }}</span>
         </h2>
+        <button class="favorite-btn" @click="$emit('favoriteToggle', pokemon.id )">Favorite: {{ isFavorite ? '★' : '☆' }}</button>
         <button class="close-btn" @click="$emit('close')">×</button>
       </div>
 
@@ -172,7 +175,7 @@ function getStatColor(statName: string) {
 .modal-content {
   background-color: #1a1a2e;
   border-radius: 12px;
-  max-width: 480px;
+  /*max-width: 480px;*/
   width: 100%;
   max-height: 90vh;
   overflow-y: auto;
@@ -348,6 +351,9 @@ function getStatColor(statName: string) {
 .modal-evolution {
   padding: 16px 20px 24px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  justify-content: center;
+  display: flex;
+    flex-direction: column;
 }
 
 .evolution-chain {
@@ -355,6 +361,7 @@ function getStatColor(statName: string) {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+    justify-content: center;
 }
 
 .evolution-stage {
@@ -387,5 +394,14 @@ function getStatColor(statName: string) {
   .modal-content {
     margin: 24px;
   }
+}
+.favorite-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    border: solid 2px #ffffff;
+    border-radius:1rem;
+    padding:0.1rem 1rem;
 }
 </style>

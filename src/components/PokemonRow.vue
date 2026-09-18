@@ -1,10 +1,14 @@
 <script setup lang="ts">
-defineProps({
-  name: String,
-  dexNumber: Number,
-  spriteUrl: String,
-  isFavorite: { type: Boolean, default: false },
+interface Props {
+  name: string
+  dexNumber: number
+  spriteUrl: string
+  isFavorite?: boolean
+}
+withDefaults(defineProps<Props>(), {
+  isFavorite:false
 })
+
 
 defineEmits(['click'])
 </script>

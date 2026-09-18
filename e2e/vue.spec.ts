@@ -129,3 +129,38 @@ test('testing evolutions are right with ralts, as it is a 1 - 1 - 2', async ({pa
   )
   await expect(page.locator('.species')).toHaveText(["ralts", "kirlia", "gardevoir", "gallade"])
 })
+
+test('testing eevee gets favorited', async ({page}) => {
+  await page.goto('/')
+  await expect(page.locator('.pokemon-row').first()).toBeVisible({ timeout: 1200000 })
+
+  await page.locator('.search-input').fill('eevee')
+  // debounce is 200ms, give it a little more room for a real browser
+  await page.waitForFunction(
+    () => document.querySelectorAll('.pokemon-row').length === 1,
+    { timeout: 5000 },
+  )
+
+  const rows = page.locator('.pokemon-row')
+  await expect(rows).toHaveCount(1)
+  await expect(page.locator('.pokemon-row')).toContainText('eevee')
+
+  await page.locator('.pokemon-row').click()
+  // debounce is 200ms, give it a little more room for a real browser
+  
+  await page.locator('.favorite-btn').click()
+  await page.locator('.close-btn').click()
+
+  await page.locator('.search-input').fill('')
+  await page.waitForFunction(
+    () => document.querySelectorAll('.pokemon-row').length > 1,
+    { timeout: 5000 },
+  )
+  await page.locator('.favoriteButton').click()
+  await page.waitForFunction(
+    () => document.querySelectorAll('.pokemon-row').length === 1,
+    { timeout: 5000 },
+  )
+  await expect(page.locator('.pokemon-name')).toHaveText(["eevee"])
+
+})

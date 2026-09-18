@@ -7,6 +7,6 @@ Right now it only displays a list of pokemons,
 # TODO
 
 - [x] Search
-- [ ] Favourites
+- [x] Favourites
 - [x] Clicking a Pokemon to see it
 - [ ] store the pokemon gotten from the api in order not to overwhelm the api

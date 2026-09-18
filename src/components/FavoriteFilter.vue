@@ -10,14 +10,14 @@ defineEmits(['update:filterMode'])
 <template>
   <div class="favorite-filter">
     <button
-      class="filter-btn"
+      class="filter-btn allButton"
       :class="{ active: filterMode === 'all' }"
       @click="$emit('update:filterMode', 'all')"
     >
       All
     </button>
     <button
-      class="filter-btn"
+      class="filter-btn favoriteButton"
       :class="{ active: filterMode === 'favorites' }"
       @click="$emit('update:filterMode', 'favorites')"
     >

@@ -134,7 +134,7 @@ onMounted(() => {
             :name="item.pokemon_species.name"
             :dex-number="item.id"
             :sprite-url="getSpriteUrl(item.id.toString())"
-            :is-favorite="favoriteStore.isFavorite(parseInt(item.id.toString()))"
+            :is-favorite="favoriteStore.isFavorite(item.id)"
             @click="openDetail(item.pokemon_species.url, item.pokemon_species.name)"
           />
         </li>
@@ -148,6 +148,7 @@ onMounted(() => {
       :flavor-text="detailData.species.flavorText"
       :evolutions="detailData.evolutionChain"
       :is-loading="isDetailLoading"
+      :is-favorite="favoriteStore.isFavorite(detailData.detail.id)"
       @close="closeModal"
       @favorite-toggle="toggleFavorite(detailData.detail.id)"
     />

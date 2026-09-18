@@ -219,3 +219,42 @@ describe('Evolution chain', () => {
     expect(names).toEqual([]) // sole node, no evolves_to children rendered
   })
 })
+describe('Favorites', () => {
+  it('opens the detail modal and favorites a pokemon, check it is the only favorited and the two buttons work', async () => {
+    const wrapper = mount(HomeView, {
+      global: { provide: { favoritesRepository: createFakeFavoritesRepository([]) } },
+    })
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === mockResponse.count)
+
+    await wrapper.find('.pokemon-row').trigger('click')
+    expect(window.alert).not.toHaveBeenCalled() // will fail loudly with a clear reason if it did
+    await vi.waitUntil(() => wrapper.find('.modal-backdrop').exists())
+
+    wrapper.find('.favorite-btn').trigger('click')
+    wrapper.find('.modal-backdrop').trigger('click')
+    wrapper.find('.favoriteButton').trigger('click')
+
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === 1)
+    expect(wrapper.findAll('.pokemon-row').length).toBe(1)
+    wrapper.find('.allButton').trigger('click')
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === mockResponse.count)
+
+    expect(wrapper.findAll('.pokemon-row').length).toBe(mockResponse.count)
+
+  })
+  it('check that eevee and bulbasaur are favorited', async () => {
+    const wrapper = mount(HomeView, {
+      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 133]) } },
+    })
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === mockResponse.count)
+
+    wrapper.find('.favoriteButton').trigger('click')
+
+    await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === 2)
+    const names = wrapper.findAll('.pokemon-name').map(n => n.text())
+    expect(names).toEqual(expect.arrayContaining([
+      'bulbasaur', 'eevee'
+    ]))
+    
+  })
+})
