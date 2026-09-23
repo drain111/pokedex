@@ -2,8 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createFakeFavoritesRepository } from '../adapters/FakeFavoritesRepository.ts'
-import HomeView from '../views/HomeView.vue'
+import { createidbCacheRepository } from '../adapters/FakeCacheRepository.ts'
 
+import HomeView from '../views/HomeView.vue'
+import {extractFlavorText} from '../composables/utils.js'
 import {bulbasaur, ivysaur, venusaur, bulbasaurSpecies, bulbasaurChain, ivysaurSpecies, venusaurSpecies } from './fixtures/bulbasaur'
 import { eevee, eeveeSpecies, eeveeChain } from './fixtures/eevee'
 import { ralts, raltsSpecies, raltsChain } from './fixtures/ralts'
@@ -56,14 +58,13 @@ function mockFetchByUrl(url: string): Response {
 
   return { ok: true, json: async () => match[1] } as Response
 }
-function cleanFlavorText(text: string): string {
-  return text.replace(/[\n\f\r]+/g, ' ').replace(/\s+/g, ' ').trim()
-}
+
 process.on('unhandledRejection', (reason) => {
   console.error('UNHANDLED REJECTION:', reason)
 })
-beforeEach(() => {
+beforeEach(async () => {
   vi.spyOn(window, 'alert').mockImplementation(() => {})
+
   global.fetch = vi.fn<typeof fetch>().mockImplementation(async (input) => {
     const url = input.toString()
     if (url.includes('pokedex') ) {
@@ -78,6 +79,7 @@ describe('HomeView', () => {
     const wrapper = mount(HomeView, {
       global: { provide: {
       favoritesRepository: createFakeFavoritesRepository([1, 4]), // bulbasaur & charmander pre-favorited
+      cacheRepository:createidbCacheRepository({})
       }, 
     },
     })
@@ -92,6 +94,7 @@ describe('HomeView', () => {
     const wrapper = mount(HomeView, {
       global: { provide: {
       favoritesRepository: createFakeFavoritesRepository([1, 4]), // bulbasaur & charmander pre-favorited
+      cacheRepository:createidbCacheRepository({})
       }, 
     },
     })
@@ -102,6 +105,7 @@ describe('HomeView', () => {
     const wrapper = mount(HomeView, {
       global: { provide: {
       favoritesRepository: createFakeFavoritesRepository([1, 4]), // bulbasaur & charmander pre-favorited
+      cacheRepository:createidbCacheRepository({})
       }, 
     },
     })
@@ -118,6 +122,7 @@ describe('HomeView', () => {
     const wrapper = mount(HomeView, {
       global: { provide: {
       favoritesRepository: createFakeFavoritesRepository([1, 4]), // bulbasaur & charmander pre-favorited
+      cacheRepository:createidbCacheRepository({})
       }, 
     },
     })
@@ -142,8 +147,10 @@ describe('HomeView', () => {
 })
 describe('Detail modal', () => {
   it('opens the detail modal and shows description in English', async () => {
+    const cacheRepo = createidbCacheRepository({})
+
     const wrapper = mount(HomeView, {
-      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 4]) } },
+      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 4]), cacheRepository:cacheRepo } },
     })
     await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === mockResponse.count)
 
@@ -152,12 +159,17 @@ describe('Detail modal', () => {
     await vi.waitUntil(() => wrapper.find('.modal-backdrop').exists())
 
     const modalText = wrapper.find('.modal-flavor-text').text()
-    const flavourText = bulbasaurSpecies.flavor_text_entries.find(
+    /*const flavourText = bulbasaurSpecies.flavor_text_entries.find(
       (e: {language: {name:string}}) => e.language.name === 'en'
     )!.flavor_text
-    const cleanedFlavourText = cleanFlavorText(flavourText)
+    const cleanedFlavourText = cleanFlavorText(flavourText)*/
+    const cleanedFlavourText = extractFlavorText(bulbasaurSpecies.flavor_text_entries)
+
     // assert against the English flavor text you hardcoded from the fixture
     expect(modalText).toContain(cleanedFlavourText)
+    //We cache the species, pokemon, and evolution, so repo must be called 3 times
+    expect(cacheRepo.saveApiCall).toHaveBeenCalledTimes(3)
+
   })
 })
 
@@ -173,7 +185,7 @@ describe('Evolution chain', () => {
 
   it('shows bulbasaur -> ivysaur -> venusaur in order', async () => {
     const wrapper = mount(HomeView, {
-      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 4]) } },
+      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 4]), cacheRepository:createidbCacheRepository({}) } },
     })
     await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === mockResponse.count)
     await openEvolutionFor(0, wrapper)
@@ -186,7 +198,7 @@ describe('Evolution chain', () => {
     // if eevee isn't in mockResponse.pokemon_entries, add it there or mount a
     // component that fetches its detail directly rather than via the list
     const wrapper = mount(HomeView, {
-      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 4]) } },
+      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 4]), cacheRepository:createidbCacheRepository({}) } },
     })
     await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === mockResponse.count)
     await openEvolutionFor(/* eevee's index */ 3, wrapper)
@@ -199,7 +211,7 @@ describe('Evolution chain', () => {
 
   it('shows ralts -> kirlia -> gardevoir/gallade branch', async () => {
     const wrapper = mount(HomeView, {
-      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 4]) } },
+      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 4]), cacheRepository:createidbCacheRepository({}) } },
     })
     await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === mockResponse.count)
     await openEvolutionFor(/* ralts's index */ 9, wrapper)
@@ -210,7 +222,7 @@ describe('Evolution chain', () => {
 
   it('shows no evolutions for xerneas', async () => {
     const wrapper = mount(HomeView, {
-      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 4]) } },
+      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 4]), cacheRepository:createidbCacheRepository({}) } },
     })
     await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === mockResponse.count)
     await openEvolutionFor(/* xerneas's index */ 16, wrapper)
@@ -222,7 +234,7 @@ describe('Evolution chain', () => {
 describe('Favorites', () => {
   it('opens the detail modal and favorites a pokemon, check it is the only favorited and the two buttons work', async () => {
     const wrapper = mount(HomeView, {
-      global: { provide: { favoritesRepository: createFakeFavoritesRepository([]) } },
+      global: { provide: { favoritesRepository: createFakeFavoritesRepository([]), cacheRepository:createidbCacheRepository({}) } },
     })
     await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === mockResponse.count)
 
@@ -243,8 +255,9 @@ describe('Favorites', () => {
 
   })
   it('check that eevee and bulbasaur are favorited', async () => {
+    const cacheRepo = createidbCacheRepository({})
     const wrapper = mount(HomeView, {
-      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 133]) } },
+      global: { provide: { favoritesRepository: createFakeFavoritesRepository([1, 133]), cacheRepository:cacheRepo } },
     })
     await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === mockResponse.count)
 
@@ -252,6 +265,8 @@ describe('Favorites', () => {
 
     await vi.waitUntil(() => wrapper.findAll('.pokemon-row').length === 2)
     const names = wrapper.findAll('.pokemon-name').map(n => n.text())
+    //I don't have a clear, so the cache repo must be called 0 times from previous tests
+    expect(cacheRepo.saveApiCall).toHaveBeenCalledTimes(0)
     expect(names).toEqual(expect.arrayContaining([
       'bulbasaur', 'eevee'
     ]))

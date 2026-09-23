@@ -1,158 +1,45 @@
+import {extractFlavorText} from './utils'
+import type { ChainLink, ChainLinkAPI, Evolution_Details, EvolutionChainApiResponse, FullDetail, PokemonDetailData, Species } from './types'
+import type { CacheRepository } from '@/ports/CacheRepository'
+
 
 const API_BASE = 'https://pokeapi.co/api/v2'
 
-export interface TypeDetail {
-  slot: number
-  type: type
+
+ async function cachedFetch<T>(  cacheRepository: CacheRepository, name: string): Promise<Promise<{ ok: boolean; json(): Promise<T>; text(): Promise<string>; }> | null> {
+  const savedAsJson = await cacheRepository.apiCallSaved(name) as T | undefined
+  if (savedAsJson) return new Promise(res => res({ ok: true, json: async () => savedAsJson, text: async () => '{}' }))
+  return null
+}
+async function storeFetch<T>(  cacheRepository: CacheRepository, cache:T, name: string): Promise<void> {
+  await cacheRepository.saveApiCall(cache, name)
 }
 
-export interface AbilityDetail {
-  ability: { name: string; url: string }
-  is_hidden: boolean
-  slot: number
-}
 
-export interface StatDetail {
-  base_stat: number
-  stat: { name: string }
-}
 
-export interface SpriteData {
-  front_default: string | null
-  other: {
-    'official-artwork': { front_default: string }
-    home: { front_default: string }
-  }
-}
 
-export interface PokemonDetailData {
-  id: number
-  name: string
-  sprites: SpriteData
-  types: TypeDetail[]
-  stats: StatDetail[]
-  abilities: AbilityDetail[]
-  height: number
-  weight: number
-  base_experience: number
-}
-
-export interface ChainLink {
-  species: { name: string; url: string }
-  evolution_method: string | null 
-  evolves_to: ChainLink[]
-}
-export interface ChainLinkAPI {
-  species: { name: string; url: string }
-  evolution_details: Evolution_Details[]
-  evolves_to: ChainLinkAPI[]
-}
-export interface Evolution_Details {
-  trigger:{name: string, url:string},
-  min_level: number | null,
-  min_happiness: number | null,
-  min_beauty: number | null,
-  min_affection: number |null,
-  gender: number | null,
-  time_of_day: string | null,
-  held_item: held_item | null,
-  known_move: known_move | null,
-  known_move_type: known_move | null,
-  location: location | null,
-  needs_overworld_rain: boolean,
-  party_species: party_species | null,
-  party_type: type | null,
-  relative_physical_stats : number | null,
-  trade_species: trade_species | null,
-  turn_upside_down: boolean
-  item: item | null
-
-}
-export interface EvolutionChainApiResponse {
-  chain: ChainLinkAPI
-}
-
- 
-function extractFlavorText(entries: { flavor_text: string; language: { name: string } }[], _lang = 'en'): string {
-  const texts: string[] = []
-  for (const entry of entries) {
-    if(entry.language.name != "en") {
-      continue
-    }
-    const clean = entry.flavor_text
-      .replace(/\n/g, ' ')
-      .replace(/\f/g, ' ')
-      .replace(/\r/g, ' ')
-      .trim()
-    if (clean) texts.push(clean)
-  }
-  return texts[0] || 'No description available'
-}
-
-export function parseSpeciesPokemonUrl(pokemonUrl: string): string | null {
-  const parts = pokemonUrl.split('/')
-  const name = parts[parts.length - 2]
-  return name || null
-}
-
-export interface EvolutionEntry {
-  name: string
-  url: string
-}
-
-export interface FullDetail {
-  detail: PokemonDetailData
-  species: {
-    id: number
-    genus: string
-    flavorText: string
-  }
-  evolutionChain: ChainLink
-}
-//so all this are just going to be the same, but for the sake of readability, let's make one for each type except known_move due to being the same move?
-interface held_item {
-  name : string,
-  url : string
-}
-interface known_move {
-  name : string,
-  url : string
-}
-interface location {
-  name : string,
-  url : string
-}
-interface party_species {
-  name : string,
-  url : string
-}
-interface trade_species {
-  name: string;
-  url: string 
-}
-interface item {
-  name: string;
-  url: string 
-}
-//this one created by the ai first for the pokemonType, but from reading apidocs, is the only one that has A LOT MORE parameters than the others, if I ever want to add them
-interface type {
-  name: string;
-  url: string 
-}
-export async function fetchPokemonDetail(pokemonUrl: string, name:string): Promise<FullDetail> {
+export async function fetchPokemonDetail(pokemonUrl: string, name:string, cacheRepository: CacheRepository): Promise<FullDetail> {
+  
+  if(!name) throw new Error('Failed to get name from pokemonUrl')
   if(name == "zygarde") {
     name = "zygarde-50"
   }
+  const detailStr = await cachedFetch<PokemonDetailData>(cacheRepository,'detail-' + name)
+  const speciesStr = await cachedFetch<Species>(cacheRepository, 'species-' + name)
   const [detailRes, speciesRes] = await Promise.all([
-    fetch(`${API_BASE}/pokemon/${name}`),
-    fetch(pokemonUrl),
+    detailStr ? detailStr : fetch(`${API_BASE}/pokemon/${name}`),
+    speciesStr? speciesStr: fetch(pokemonUrl),
   ])
-
+  
   if (!detailRes.ok) throw new Error('Failed to fetch Pokemon detail')
   if (!speciesRes.ok) throw new Error('Failed to fetch Pokemon species')
-
   const detail: PokemonDetailData = await detailRes.json()
-  const speciesJson: { genera: { genus: string; language: { name: string } }[]; flavor_text_entries: { flavor_text: string; language: { name: string } }[]; evolution_chain: { url: string }; id: number } = await speciesRes.json()
+  const speciesJson: Species = await speciesRes.json()
+  if(!detailStr) {
+    await storeFetch(cacheRepository, detail,'detail-' + name)
+    await storeFetch(cacheRepository, speciesJson,'species-' + name)
+  }   
+
 
   const genus = speciesJson.genera.find((g) => g.language.name === 'en')?.genus || 'Unknown'
   const flavorText = extractFlavorText(speciesJson.flavor_text_entries, 'en')
@@ -160,9 +47,15 @@ export async function fetchPokemonDetail(pokemonUrl: string, name:string): Promi
   const baseUrl = chainUrl.substring(0, chainUrl.lastIndexOf('/'))
   let evolutionChain: FullDetail['evolutionChain'] = { species: { name: detail.name, url: baseUrl }, evolution_method: "", evolves_to: [] }
   try {
-    const chainRes = await fetch(chainUrl)
+    const storageName =  chainUrl.replace("https://pokeapi.co/api/v2/", "");
+    const chainStr = await cachedFetch<EvolutionChainApiResponse>(cacheRepository, storageName)
+
+    const chainRes =  chainStr ? await chainStr: await fetch(chainUrl)
     if (chainRes.ok) {
       const chainData: EvolutionChainApiResponse = await chainRes.json()
+      if(!chainStr) await storeFetch(cacheRepository, chainData, storageName)
+      
+
       function mapChainLink(link: ChainLinkAPI): ChainLink {
         const detail = link.evolution_details.length? link.evolution_details[0] : null; // Evolution_Details | undefined
         const final : ChainLink = { species: link.species, evolution_method: detail

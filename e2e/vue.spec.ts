@@ -1,11 +1,9 @@
 import { test, expect } from '@playwright/test'
 import { xerneasSpecies } from '../src/__tests__/fixtures/xerneas.js'
-
+import {extractFlavorText} from '../src/composables/utils.js'
 // See here how to get started:
 // https://playwright.dev/docs/intro
-function cleanFlavorText(text: string): string {
-  return text.replace(/[\n\f\r]+/g, ' ').replace(/\s+/g, ' ').trim()
-}
+
 
 test('every row has a name, dex number, and a loaded sprite', async ({ page }) => {
   await page.goto('/')
@@ -77,7 +75,7 @@ test('testing the search terms, bulbasaur should make bulbasaur appear only, sam
     
   })
 
-test('testing the description of xerneas and that the modal opens', async ({page}) => {
+test('testing the description of xerneas and that the modal opens, also the idb cache works', async ({page}) => {
   await page.goto('/')
   await expect(page.locator('.pokemon-row').first()).toBeVisible({ timeout: 1200000 })
 
@@ -98,12 +96,32 @@ test('testing the description of xerneas and that the modal opens', async ({page
     () => document.querySelectorAll('.modal-backdrop').length === 1,
     { timeout: 5000 },
   )
-  const flavourText = xerneasSpecies.flavor_text_entries.find(
+  /*const flavourText = xerneasSpecies.flavor_text_entries.find(
     (e: {language: {name:string}}) => e.language.name === 'en'
   )!.flavor_text
-  const cleanedFlavourText = cleanFlavorText(flavourText)
-  
+  const cleanedFlavourText = cleanFlavorText(flavourText)*/
+  const cleanedFlavourText = extractFlavorText(xerneasSpecies.flavor_text_entries)
   await expect(page.locator('.modal-flavor-text')).toContainText(cleanedFlavourText)
+  // Execute script inside the real browser context to query IndexedDB
+  const cachedData = await page.evaluate(async () => {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('pokedex') // Replace with your actual DB name
+
+      request.onsuccess = () => {
+        const db = request.result
+        const transaction = db.transaction(['pokedex-cache'], 'readonly') // Replace with store name
+        const store = transaction.objectStore('pokedex-cache')
+        const getReq = store.get('detail-xerneas')
+
+        getReq.onsuccess = () => resolve(getReq.result)
+        getReq.onerror = () => reject(getReq.error)
+      }
+      request.onerror = () => reject(request.error)
+    })
+  })
+
+  // Assert that data was saved to real IndexedDB
+  expect(cachedData).toBeDefined()
 })
 
 test('testing evolutions are right with ralts, as it is a 1 - 1 - 2', async ({page}) => {

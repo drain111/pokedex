@@ -41,6 +41,7 @@ export const useFavoriteStore = defineStore('favorite', () => {
       // ignore
     }
   }
+  
 
-  return { isFavorite, toggleFavorite, getFavorites }
+  return { isFavorite, toggleFavorite, getFavorites}
 })

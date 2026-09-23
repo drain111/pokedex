@@ -1,7 +1,7 @@
 <!-- EvolutionNode.vue -->
 <script setup lang="ts">
 defineOptions({ name: 'EvolutionNode' })
-import type {ChainLink} from '../composables/usePokemonDetail'
+import type {ChainLink} from '../composables/types'
 
 interface Props {
      node:ChainLink 
@@ -38,5 +38,10 @@ function getEvoSprite(name: string) {
 }
 .method {
     background: gray;
+}
+.species {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 </style>

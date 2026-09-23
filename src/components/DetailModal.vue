@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import EvolutionNode from "./EvolutionNode.vue"
-import type {ChainLink} from '../composables/usePokemonDetail'
+import type {ChainLink} from '../composables/types'
 
 interface Props {
   pokemon: {
@@ -82,11 +82,12 @@ function getStatColor(statName: string) {
           <span class="modal-number">#{{ pokemon.id.toString().padStart(3, '0') }}</span>
           <span class="modal-name">{{ pokemon.name }}</span>
         </h2>
-        <button class="favorite-btn" @click="$emit('favoriteToggle', pokemon.id )">Favorite: {{ isFavorite ? '★' : '☆' }}</button>
         <button class="close-btn" @click="$emit('close')">×</button>
       </div>
 
       <div class="modal-sprite-section">
+        <button class="favorite-btn" @click="$emit('favoriteToggle', pokemon.id )">Favorite: {{ isFavorite ? '★' : '☆' }}</button>
+
         <img :src="fullArtworkUrl" :alt="pokemon.name" class="modal-sprite" />
         <div class="modal-types">
           <span v-for="t in pokemon.types" :key="t.type.name" :class="`type-badge type-${t.type.name}`" class="type-badge">
@@ -226,6 +227,9 @@ function getStatColor(statName: string) {
   text-align: center;
   padding: 24px 16px;
   background: linear-gradient(180deg, rgba(100, 100, 255, 0.1) 0%, transparent 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .modal-sprite {
@@ -403,5 +407,6 @@ function getStatColor(statName: string) {
     border: solid 2px #ffffff;
     border-radius:1rem;
     padding:0.1rem 1rem;
+    margin-bottom:1rem;
 }
 </style>

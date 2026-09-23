@@ -4,6 +4,9 @@ import { ref, computed, inject  } from 'vue'
 import { useSearch } from './useSearch'
 // Pinia store for managing favorite Pokemon IDs across the app
 import type { FavoritesRepository } from '../ports/FavoritesRepository.ts'
+import type { CacheRepository } from '../ports/CacheRepository.ts'
+
+import { fetchPokemonDetail } from './usePokemonDetail.ts'
 
 
   
@@ -75,6 +78,9 @@ export function usePokemonList() {
   const searchFilter = useSearch()
   const favoriteStore = inject<FavoritesRepository>('favoritesRepository')
   if (!favoriteStore) throw new Error('favoritesRepository was not provided')
+  const injectedCacheRepository = inject<CacheRepository>('cacheRepository')
+  if (!injectedCacheRepository) throw new Error('CacheRepository was not provided')
+  const cacheRepository: CacheRepository = injectedCacheRepository  // now definitely non-undefined
   // useFavoriteStore is a Pinia store instance for cross-component favorite management
 
   // --- Computed properties ---
@@ -103,6 +109,9 @@ export function usePokemonList() {
 
     return items
   })
+  async function openDetail(url: string, name: string) {
+    return fetchPokemonDetail(url, name, cacheRepository) // pass the already-injected instance down
+  }
 
   // --- Actions (functions that mutate state or perform side effects) ---
   // Fetches all pokemon from the API and updates reactive state accordingly.
@@ -136,6 +145,7 @@ export function usePokemonList() {
     loadPokemon,
     onFilterChange,
     searchFilter,
-    favoriteStore
+    favoriteStore,
+    openDetail
   }
 }

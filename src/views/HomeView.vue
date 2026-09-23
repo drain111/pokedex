@@ -5,8 +5,7 @@ import FavoriteFilter from '../components/FavoriteFilter.vue'
 import PokemonRow from '../components/PokemonRow.vue'
 import DetailModal from '../components/DetailModal.vue'
 import { usePokemonList } from '../composables/usePokemonList'
-import { fetchPokemonDetail } from '../composables/usePokemonDetail'
-import type {ChainLink} from '../composables/usePokemonDetail'
+import type {ChainLink} from '../composables/types'
 const pokemonStore = usePokemonList()
 
 const { loading, error, filterMode, displayedPokemons, loadPokemon, favoriteStore } = pokemonStore
@@ -35,7 +34,7 @@ async function openDetail(url: string, name: string) {
   isDetailLoading.value = true
   detailData.value = null
   try {
-    detailData.value = await fetchPokemonDetail(url, name)
+    detailData.value = await pokemonStore.openDetail(url, name)
   } catch (e) {
     isDetailLoading.value = false
     alert(e)
